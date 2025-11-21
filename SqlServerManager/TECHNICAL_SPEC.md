@@ -343,7 +343,7 @@ Users can modify:
 ## Dependencies
 
 ### NuGet Packages
-- `System.Data.SqlClient` (v4.8.6): SQL Server connectivity
+- `Microsoft.Data.SqlClient` (v5.2.2): Modern SQL Server connectivity with enhanced security
 
 ### Framework
 - `.NET 8.0`
@@ -367,7 +367,7 @@ dotnet build --configuration Release
 bin/Release/net8.0-windows/
 ├── SqlServerManager.exe
 ├── SqlServerManager.dll
-├── System.Data.SqlClient.dll
+├── Microsoft.Data.SqlClient.dll
 └── [other dependencies]
 ```
 

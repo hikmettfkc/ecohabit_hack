@@ -143,7 +143,7 @@ SqlServerManager/
 
 ### Key Technologies
 - **Framework**: .NET 8.0 Windows Forms
-- **Database**: System.Data.SqlClient for SQL Server connectivity
+- **Database**: Microsoft.Data.SqlClient v5.2.2 for SQL Server connectivity
 - **Data Storage**: JSON for server list persistence
 - **UI**: Native Windows Forms controls with modern styling
 
