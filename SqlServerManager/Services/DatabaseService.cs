@@ -1,6 +1,7 @@
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using SqlServerManager.Models;
+using System.Text.RegularExpressions;
 
 namespace SqlServerManager.Services
 {
@@ -151,11 +152,20 @@ namespace SqlServerManager.Services
         {
             try
             {
+                // Validate and sanitize table name to prevent SQL injection
+                var sanitizedTableName = SanitizeIdentifier(tableName);
+                if (sanitizedTableName == null)
+                {
+                    LogMessage?.Invoke(this, $"Invalid table name: {tableName}");
+                    return -1;
+                }
+                
                 var connectionString = BuildConnectionString(serverName, username, password, database);
                 using var connection = new SqlConnection(connectionString);
                 await connection.OpenAsync();
                 
-                var query = $"SELECT COUNT(*) FROM {tableName}";
+                // Use QUOTENAME for additional safety with the sanitized identifier
+                var query = $"SELECT COUNT(*) FROM {sanitizedTableName}";
                 using var command = new SqlCommand(query, connection);
                 var result = await command.ExecuteScalarAsync();
                 
@@ -166,6 +176,45 @@ namespace SqlServerManager.Services
                 LogMessage?.Invoke(this, $"Error counting rows in {tableName} on {serverName}: {ex.Message}");
                 return -1;
             }
+        }
+        
+        /// <summary>
+        /// Sanitizes SQL identifiers (table names, column names, etc.) to prevent SQL injection.
+        /// Accepts formats like: TableName, [TableName], schema.TableName, [schema].[TableName]
+        /// </summary>
+        private string? SanitizeIdentifier(string identifier)
+        {
+            if (string.IsNullOrWhiteSpace(identifier))
+                return null;
+            
+            // Remove extra whitespace
+            identifier = identifier.Trim();
+            
+            // Pattern allows:
+            // - Simple names: TableName
+            // - Bracketed names: [TableName]
+            // - Schema qualified: schema.TableName or [schema].[TableName]
+            // - Up to 3 parts (server.database.schema.table or database.schema.table)
+            var validIdentifierPattern = @"^(\[?[\w]+\]?\.)*\[?[\w]+\]?$";
+            
+            if (!Regex.IsMatch(identifier, validIdentifierPattern))
+            {
+                LogMessage?.Invoke(this, $"Invalid identifier format: {identifier}");
+                return null;
+            }
+            
+            // Additional check: reject if contains semicolon, quotes (except brackets), or SQL keywords in suspicious patterns
+            if (identifier.Contains(';') || 
+                identifier.Contains('\'') || 
+                identifier.Contains('"') ||
+                identifier.Contains("--") ||
+                identifier.Contains("/*"))
+            {
+                LogMessage?.Invoke(this, $"Potentially malicious identifier: {identifier}");
+                return null;
+            }
+            
+            return identifier;
         }
         
         public void CloseAllConnections()
