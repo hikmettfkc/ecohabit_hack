@@ -1,0 +1,10 @@
+# SQL Server Manager - Sample Server List
+# Lines starting with # are comments and will be ignored
+# Add one server name per line
+
+# Example servers (replace with your actual server names):
+localhost
+SERVER001
+SERVER002
+SERVER003
+# Add more servers below...
